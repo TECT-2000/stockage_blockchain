@@ -1,0 +1,28 @@
+{
+    "nomBureau": "Bureau 4",
+    "nbVotants": 59,
+    "signataire": {
+        "indBureau": 3,
+        "scrutateur": 3
+    },
+    "candidats": [{
+            "candidat": "Candidat 1",
+            "nbVoix": 17,
+            "scrutateur": ""
+        }, {
+            "candidat": "Candidat 2",
+            "nbVoix": 34,
+            "scrutateur": ""
+        }, {
+            "candidat": "Candidat 3",
+            "nbVoix": 2,
+            "scrutateur": ""
+        }, {
+            "candidat": "Candidat 4",
+            "nbVoix": 37,
+            "scrutateur": "Scrutateur 2"
+        }, {
+            "candidat": "Bulletin null ",
+            "nbVoix": 2
+        }]
+}
