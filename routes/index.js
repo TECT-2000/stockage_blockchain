@@ -3,21 +3,26 @@ var router = express.Router();
 var fs = require('fs');
 const request = require('request');
 
+router.get('/api',(req,res)=>{
+    res.send('hello world')
+});
+
 /* GET home page. */
-router.get("/stockage",(req,res)=>{
-    const body = req.params.url
+router.get("/stockage", (req, res) => {
+    const body = req.query.url
     console.log(body)
-    reponse=readPV();
-    console.log(reponse)
-    var test = EnregistrementBureau(reponse)
-    if (test) {
-        test = EnregistrementCandidat(reponse)
-        if (test)
-            test = EnregistrementScrutateur(reponse)
-        if (test)
-            EnregistrementPV(reponse)
-    }
-    res.send(reponse)
+    reponse = readPV(body);
+    //console.log(reponse)
+    EnregistrementBureau(reponse)
+
+    EnregistrementCandidat(reponse)
+
+    EnregistrementScrutateur(reponse)
+
+    EnregistrementPV(reponse)
+
+    //res.send(reponse)
+    res.send("hello world")
 })
 var foldersInMainFolder = (path) => {
     return fs.readdirSync(path);
@@ -57,9 +62,9 @@ var convertFilesInEachFoldersToJson = (mainPath, foldersName, filesInEachFolder,
 }
 
 
-var readPV = () => {
+var readPV = (path) => {
     var jsonFolder = 'JSON';
-    var mainFolderPath ="./Bureaux";
+    var mainFolderPath = path + "/Bureaux";
 
     var allFolders = foldersInMainFolder(mainFolderPath);
     var allFilesInEachFolder = filesInEachFolder(mainFolderPath, jsonFolder, allFolders);
@@ -90,73 +95,96 @@ var EnregistrementBureau = (allJsonFiles) => {
             console.log(res.toJSON().body);
         });
     }
-    return true;
 }
 var EnregistrementCandidat = (allJsonFiles) => {
-    allJsonFiles[0][0]['PV_ELECAM'].candidats.forEach((candObject) => {
-        request.post({
-            "headers": {"content-type": "application/json"},
-            "url": "http://localhost:3000/api/Candidat",
-            "body": JSON.stringify({
-                "$class": "org.example.projet.Candidat",
-                "candidatId": candObject.candidat,
-            })
-        }, (err, res, body) => {
-            if (err) {
-                return console.log(err);
-            }
-            //console.log(body.url);
-            //console.log(body.explanation);
-            console.log(res.toJSON().body);
-        });
-        console.log(candObject.candidat);
-    })
-    return true
+    if (allJsonFiles[0][0]['PV_ELECAM'] == null) {
+        allJsonFiles[0][0]['PV_1_1'].candidats.forEach((candObject) => {
+            request.post({
+                "headers": {"content-type": "application/json"},
+                "url": "http://localhost:3000/api/Candidat",
+                "body": JSON.stringify({
+                    "$class": "org.example.projet.Candidat",
+                    "candidatId": candObject.candidat,
+                })
+            }, (err, res, body) => {
+                if (err) {
+                    return console.log(err);
+                }
+                //console.log(body.url);
+                //console.log(body.explanation);
+                console.log(res.toJSON().body);
+            });
+            console.log(candObject.candidat);
+        })
+    } else {
+        allJsonFiles[0][0]['PV_ELECAM'].candidats.forEach((candObject) => {
+            request.post({
+                "headers": {"content-type": "application/json"},
+                "url": "http://localhost:3000/api/Candidat",
+                "body": JSON.stringify({
+                    "$class": "org.example.projet.Candidat",
+                    "candidatId": candObject.candidat,
+                })
+            }, (err, res, body) => {
+                if (err) {
+                    return console.log(err);
+                }
+                //console.log(body.url);
+                //console.log(body.explanation);
+                console.log(res.toJSON().body);
+            });
+            console.log(candObject.candidat);
+        })
+    }
 }
 
 var EnregistrementScrutateur = (allJsonFiles) => {
+    console.log('enregistrer les scrutateurs')
+    
     allJsonFiles.forEach((office) => {
         office.forEach((pv) => {
+            console.log(pv)
             for (var n in pv) {
-                if (pv[n] !== "truePV") {
-                    var id = pv[n].signataire.indBureau + "_" + pv[n].signataire.scrutateur;
-                    var name = "scrutateur" + id;
-                    var s = {
-                        "id": id,
-                        "nom": name
-                    }
-                    idCandidat = pv[n].signataire.scrutateur;
-                    if (idCandidat > 0) {
-                        idCandidat += 1
-                        request.post({
-                            "headers": {"content-type": "application/json"},
-                            "url": "http://localhost:3000/api/Scrutateur",
-                            "body": JSON.stringify({
-                                "$class": "org.example.projet.Scrutateur",
-                                "scrutateurId": s.id,
-                                "candidat": "resource:org.example.projet.Candidat#Candidat" + idCandidat,
-                                //"bureau":  pv[n].nomBureau,
-                                "name": s.nom
-                            })
-                        }, (err, res, body) => {
-                            if (err) {
-                                return console.log(err);
-                            }
-                            //console.log(body.url);
-                            //console.log(body.explanation);
-                            console.log(res.toJSON().body);
-                        });
-                    }
-                    //allScrutateurs.push(s);
+                console.log(name)
+                var id = pv[n].signataire.indBureau + "_" + pv[n].signataire.scrutateur;
+                var name = "scrutateur" + id;
+                var s = {
+                    "id": id,
+                    "nom": name
                 }
+                idCandidat = pv[n].signataire.scrutateur;
+                console.log(idCandidat)
+                if (idCandidat > 0) {
+                    idCandidat += 1
+                    request.post({
+                        "headers": {"content-type": "application/json"},
+                        "url": "http://localhost:3000/api/Scrutateur",
+                        "body": JSON.stringify({
+                            "$class": "org.example.projet.Scrutateur",
+                            "scrutateurId": s.id,
+                            "candidat": "resource:org.example.projet.Candidat#Candidat" + idCandidat,
+                            //"bureau":  pv[n].nomBureau,
+                            "name": s.nom
+                        })
+                    }, (err, res, body) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        //console.log(body.url);
+                        //console.log(body.explanation);
+                        console.log(res.toJSON().body);
+                    });
+                }
+                //allScrutateurs.push(s);
             }
+
         })
     })
-    return true
 }
 
 
 var EnregistrementPV = (allJsonFiles) => {
+    console.log('enrregistrer les pv')
     allJsonFiles.forEach((office) => {
         office.forEach((pv) => {
             for (var n in pv) {
@@ -195,7 +223,7 @@ var EnregistrementPV = (allJsonFiles) => {
     })
 }
 
-var stockage=(path)=>{
+var stockage = (path) => {
     var allJsonFiles = readPV(path);
     var test = EnregistrementBureau(allJsonFiles)
     if (test) {
